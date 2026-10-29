@@ -1,0 +1,8 @@
+@model CatalogItem
+@{ ViewData["Title"] = "Cadastrar item"; }
+<h1 class="catalog-title">Cadastrar item</h1>
+<form asp-action="Create" method="post">
+    @Html.AntiForgeryToken()
+    <partial name="_CatalogForm" model="Model" />
+    <div class="d-flex gap-2 mt-4"><button type="submit" class="btn btn-primary">Cadastrar</button><a asp-action="Index" class="btn btn-outline-secondary">Voltar</a></div>
+</form>

@@ -1,0 +1,168 @@
+@model CatalogIndexViewModel
+@{ ViewData["Title"] = "Meu Catálogo"; }
+
+<div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+    <h1 class="catalog-title mb-0">Meu Catálogo</h1>
+    <a asp-action="Create" class="btn btn-primary">+ Cadastrar novo item</a>
+</div>
+
+<!-- Estatísticas são sempre do catálogo completo, mesmo com filtros ativos. -->
+<div class="row g-3 mb-4">
+    @foreach (var estatistica in new[] {
+        (Nome: "Total de itens", Valor: Model.TotalItens),
+        (Nome: "Filmes", Valor: Model.TotalFilmes),
+        (Nome: "Séries", Valor: Model.TotalSeries),
+        (Nome: "Livros", Valor: Model.TotalLivros),
+        (Nome: "Jogos", Valor: Model.TotalJogos),
+        (Nome: "Outros", Valor: Model.TotalOutros) })
+    {
+        <div class="col-6 col-md-4 col-lg-2">
+            <div class="card stats-card text-center h-100">
+                <div class="card-body">
+                    <h3>@estatistica.Valor</h3><p class="mb-0">@estatistica.Nome</p>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- GET deixa filtros visíveis na URL e permite compartilhar a pesquisa. -->
+<form asp-action="Index" method="get" class="mb-4">
+    <div class="row g-2 align-items-center">
+        <div class="col-12 col-lg-3">
+            <input name="pesquisa" value="@Model.Pesquisa" class="form-control" placeholder="Pesquisar pelo título..." aria-label="Pesquisar pelo título" />
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+            <select name="tipo" class="form-select" aria-label="Filtrar por tipo">
+                <option value="">Todos os tipos</option>
+                @foreach (var tipo in new[] { "Filme", "Série", "Livro", "Jogo", "Outro" })
+                {
+                    <option value="@tipo" selected="@(Model.Tipo == tipo)">@tipo</option>
+                }
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-3">
+            <select name="ordenacao" class="form-select" aria-label="Ordenação">
+                <option value="titulo_asc" selected="@(Model.Ordenacao == "titulo_asc")">Título: A a Z</option>
+                <option value="titulo_desc" selected="@(Model.Ordenacao == "titulo_desc")">Título: Z a A</option>
+                <option value="ano_desc" selected="@(Model.Ordenacao == "ano_desc")">Ano: mais recentes</option>
+                <option value="ano_asc" selected="@(Model.Ordenacao == "ano_asc")">Ano: mais antigos</option>
+            </select>
+        </div>
+        <div class="col-12 col-md-6 col-lg-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" name="somenteFavoritos" value="true" id="somenteFavoritos" checked="@Model.SomenteFavoritos" />
+                <label class="form-check-label" for="somenteFavoritos">♥ Só favoritos</label>
+            </div>
+        </div>
+        <div class="col-6 col-lg-1"><button type="submit" class="btn btn-primary w-100">Filtrar</button></div>
+        <div class="col-6 col-lg-1"><a asp-action="Index" class="btn btn-outline-secondary w-100">Limpar</a></div>
+    </div>
+</form>
+
+<p class="text-muted mb-3">Exibindo <strong>@Model.Items.Count</strong> itens nesta página, de <strong>@Model.TotalResultados</strong> resultados encontrados. Total no catálogo: <strong>@Model.TotalItens</strong>.</p>
+
+@if (!Model.Items.Any())
+{
+    if (Model.TotalItens == 0)
+    {
+        <div class="alert alert-secondary">Seu catálogo ainda está vazio. <a asp-action="Create">Cadastre o primeiro item</a>!</div>
+    }
+    else
+    {
+        <div class="alert alert-info">Nenhum item encontrado com os filtros selecionados. Tente outra pesquisa ou clique em <strong>Limpar</strong>.</div>
+    }
+}
+else
+{
+    <div class="d-flex gap-2 mb-3">
+        <button type="button" id="btnTabela" class="btn btn-primary">Ver tabela</button>
+        <button type="button" id="btnCartoes" class="btn btn-outline-primary">Ver cartões</button>
+    </div>
+
+    <div id="visualizacaoTabela" class="table-responsive">
+        <table class="table catalog-table align-middle">
+            <thead><tr><th>Título</th><th>Tipo</th><th>Autor ou diretor</th><th>Ano</th><th>Gênero</th><th>Ações</th></tr></thead>
+            <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td><strong>@item.Title</strong> @if (item.IsFavorite) { <span title="Favorito" class="favorite-icon">♥</span> }</td>
+                        <td>@item.Type</td><td>@item.AuthorOrDirector</td><td>@item.ReleaseYear</td><td>@item.Genre</td>
+                        <td>
+                            <div class="d-flex flex-wrap gap-2">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Detalhes</a>
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Excluir</a>
+                                <form asp-action="ToggleFavorite" asp-route-id="@item.Id" method="post">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="pesquisa" value="@Model.Pesquisa" />
+                                    <input type="hidden" name="tipo" value="@Model.Tipo" />
+                                    <input type="hidden" name="ordenacao" value="@Model.Ordenacao" />
+                                    <input type="hidden" name="somenteFavoritos" value="@Model.SomenteFavoritos.ToString().ToLowerInvariant()" />
+                                    <input type="hidden" name="pagina" value="@Model.PaginaAtual" />
+                                    <button type="submit" class="btn btn-sm @(item.IsFavorite ? "btn-danger" : "btn-outline-danger")">@(item.IsFavorite ? "♥ Favorito" : "♡ Favoritar")</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div id="visualizacaoCartoes" style="display:none">
+        <div class="row g-3">
+            @foreach (var item in Model.Items)
+            {
+                <div class="col-12 col-md-6 col-lg-4">
+                    <div class="catalog-card">
+                        <h3>@item.Title @if (item.IsFavorite) { <span title="Favorito" class="favorite-icon">♥</span> }</h3>
+                        <p><strong>Tipo:</strong> @item.Type</p>
+                        <p><strong>Autor ou diretor:</strong> @item.AuthorOrDirector</p>
+                        <p><strong>Ano:</strong> @item.ReleaseYear</p>
+                        <p><strong>Gênero:</strong> @item.Genre</p>
+                        <div class="d-flex flex-wrap gap-2 mt-3">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Detalhes</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Excluir</a>
+                            <form asp-action="ToggleFavorite" asp-route-id="@item.Id" method="post">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="pesquisa" value="@Model.Pesquisa" />
+                                <input type="hidden" name="tipo" value="@Model.Tipo" />
+                                <input type="hidden" name="ordenacao" value="@Model.Ordenacao" />
+                                <input type="hidden" name="somenteFavoritos" value="@Model.SomenteFavoritos.ToString().ToLowerInvariant()" />
+                                <input type="hidden" name="pagina" value="@Model.PaginaAtual" />
+                                <button type="submit" class="btn btn-sm @(item.IsFavorite ? "btn-danger" : "btn-outline-danger")">@(item.IsFavorite ? "♥ Favorito" : "♡ Favoritar")</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@if (Model.TotalPaginas > 1)
+{
+    <nav aria-label="Paginação do catálogo" class="mt-4">
+        <ul class="pagination justify-content-center flex-wrap">
+            <li class="page-item @(Model.PaginaAtual == 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pagina="@(Model.PaginaAtual - 1)" asp-route-pesquisa="@Model.Pesquisa" asp-route-tipo="@Model.Tipo" asp-route-ordenacao="@Model.Ordenacao" asp-route-somenteFavoritos="@Model.SomenteFavoritos">Anterior</a>
+            </li>
+            @for (int numero = 1; numero <= Model.TotalPaginas; numero++)
+            {
+                <li class="page-item @(numero == Model.PaginaAtual ? "active" : "")">
+                    <a class="page-link" asp-action="Index" asp-route-pagina="@numero" asp-route-pesquisa="@Model.Pesquisa" asp-route-tipo="@Model.Tipo" asp-route-ordenacao="@Model.Ordenacao" asp-route-somenteFavoritos="@Model.SomenteFavoritos">@numero</a>
+                </li>
+            }
+            <li class="page-item @(Model.PaginaAtual == Model.TotalPaginas ? "disabled" : "")">
+                <a class="page-link" asp-action="Index" asp-route-pagina="@(Model.PaginaAtual + 1)" asp-route-pesquisa="@Model.Pesquisa" asp-route-tipo="@Model.Tipo" asp-route-ordenacao="@Model.Ordenacao" asp-route-somenteFavoritos="@Model.SomenteFavoritos">Próxima</a>
+            </li>
+        </ul>
+    </nav>
+}
+
+@section Scripts {
+    <script src="~/js/catalog-view.js" asp-append-version="true"></script>
+}

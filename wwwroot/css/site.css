@@ -1,0 +1,18 @@
+/* Identidade visual geral do MyCatalog */
+body { background: #f8fafc; color: #243b53; }
+.navbar-brand { color: #243b53; }
+.catalog-title { color: #243b53; font-size: 2rem; font-weight: 700; }
+.hero { background: linear-gradient(125deg, #e8f1ff, #f3f7fc); }
+.catalog-table { background: #fff; border-radius: 8px; overflow: hidden; }
+.catalog-table th { background: #243b53; color: #fff; padding: 14px; white-space: nowrap; }
+.catalog-table td { padding: 12px 14px; }
+.catalog-table tbody tr:hover { background: #f1f5f9; }
+.catalog-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; height: 100%; box-shadow: 0 4px 12px rgba(0,0,0,.06); transition: transform .2s ease; }
+.catalog-card:hover { transform: translateY(-4px); }
+.catalog-card h3 { color: #243b53; font-size: 1.25rem; font-weight: 700; }
+.stats-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,.06); transition: transform .2s ease, box-shadow .2s ease; }
+.stats-card:hover { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,.1); }
+.stats-card h3 { color: #243b53; font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+.stats-card p { color: #64748b; font-size: .9rem; font-weight: 500; }
+.favorite-icon { color: #dc3545; }
+footer { font-size: .9rem; }
