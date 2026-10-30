@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyCatalog.Data;
 using MyCatalog.Models;
+using MyCatalog.Services;
 
 namespace MyCatalog.Controllers;
 
@@ -19,30 +20,8 @@ public class CatalogItemsController : Controller
         string? pesquisa, string? tipo, string? ordenacao,
         bool somenteFavoritos = false, int pagina = 1)
     {
-        var query = _context.CatalogItems.AsNoTracking().AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(pesquisa))
-        {
-            pesquisa = pesquisa.Trim();
-            query = query.Where(item => item.Title.Contains(pesquisa));
-        }
-
-        if (!string.IsNullOrWhiteSpace(tipo))
-            query = query.Where(item => item.Type == tipo);
-
-        if (somenteFavoritos)
-            query = query.Where(item => item.IsFavorite);
-
-        // A ordenação estável é importante para evitar itens repetidos entre páginas.
-        query = ordenacao switch
-        {
-            "titulo_desc" => query.OrderByDescending(x => x.Title).ThenBy(x => x.Id),
-            "ano_desc" => query.OrderBy(x => x.ReleaseYear == null)
-                               .ThenByDescending(x => x.ReleaseYear).ThenBy(x => x.Title).ThenBy(x => x.Id),
-            "ano_asc" => query.OrderBy(x => x.ReleaseYear == null)
-                              .ThenBy(x => x.ReleaseYear).ThenBy(x => x.Title).ThenBy(x => x.Id),
-            _ => query.OrderBy(x => x.Title).ThenBy(x => x.Id)
-        };
+        pesquisa = pesquisa?.Trim();
+        var query = FilteredItems(pesquisa, tipo, ordenacao, somenteFavoritos);
 
         int totalResultados = await query.CountAsync();
         int totalPaginas = Math.Max(1, (int)Math.Ceiling(totalResultados / (double)ItensPorPagina));
@@ -73,6 +52,47 @@ public class CatalogItemsController : Controller
         };
 
         return View(vm);
+    }
+
+    // A listagem e o CSV compartilham os mesmos filtros e a ordenação.
+    private IQueryable<CatalogItem> FilteredItems(
+        string? pesquisa, string? tipo, string? ordenacao, bool somenteFavoritos)
+    {
+        var query = _context.CatalogItems.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(pesquisa))
+        {
+            pesquisa = pesquisa.Trim();
+            query = query.Where(item => item.Title.Contains(pesquisa));
+        }
+
+        if (!string.IsNullOrWhiteSpace(tipo))
+            query = query.Where(item => item.Type == tipo);
+
+        if (somenteFavoritos)
+            query = query.Where(item => item.IsFavorite);
+
+        // A ordenação estável é importante para evitar itens repetidos entre páginas.
+        query = ordenacao switch
+        {
+            "titulo_desc" => query.OrderByDescending(x => x.Title).ThenBy(x => x.Id),
+            "ano_desc" => query.OrderBy(x => x.ReleaseYear == null)
+                               .ThenByDescending(x => x.ReleaseYear).ThenBy(x => x.Title).ThenBy(x => x.Id),
+            "ano_asc" => query.OrderBy(x => x.ReleaseYear == null)
+                              .ThenBy(x => x.ReleaseYear).ThenBy(x => x.Title).ThenBy(x => x.Id),
+            _ => query.OrderBy(x => x.Title).ThenBy(x => x.Id)
+        };
+
+        return query;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportCsv(
+        string? pesquisa, string? tipo, string? ordenacao, bool somenteFavoritos = false)
+    {
+        var items = await FilteredItems(pesquisa, tipo, ordenacao, somenteFavoritos)
+            .ToListAsync(HttpContext.RequestAborted);
+        return File(CatalogCsvExporter.Export(items), "text/csv; charset=utf-8", "MyCatalog.csv");
     }
 
     // GET: mostra os detalhes de um item pelo ID.

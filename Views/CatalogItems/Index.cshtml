@@ -3,7 +3,13 @@
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
     <h1 class="catalog-title mb-0">Meu Catálogo</h1>
-    <a asp-action="Create" class="btn btn-primary">+ Cadastrar novo item</a>
+    <div class="d-flex flex-wrap gap-2">
+        <a asp-action="ExportCsv" asp-route-pesquisa="@Model.Pesquisa"
+           asp-route-tipo="@Model.Tipo" asp-route-ordenacao="@Model.Ordenacao"
+           asp-route-somenteFavoritos="@Model.SomenteFavoritos"
+           class="btn btn-outline-primary">Exportar CSV</a>
+        <a asp-action="Create" class="btn btn-primary">+ Cadastrar novo item</a>
+    </div>
 </div>
 
 <!-- Estatísticas são sempre do catálogo completo, mesmo com filtros ativos. -->
