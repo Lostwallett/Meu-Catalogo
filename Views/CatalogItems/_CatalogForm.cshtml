@@ -1,4 +1,5 @@
 @model CatalogItem
+<p class="text-muted mb-4">Comece pelo título e pelo tipo. Os demais detalhes são opcionais e podem ser completados depois.</p>
 <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 <div class="row g-3">
     <div class="col-md-8"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /><span asp-validation-for="Title" class="text-danger"></span></div>

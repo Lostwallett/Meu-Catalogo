@@ -1,9 +1,9 @@
 @model CatalogItem
 @{ ViewData["Title"] = "Editar item"; }
-<h1 class="catalog-title">Editar item</h1>
-<form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+<a asp-action="Index" class="back-link">← Voltar ao catálogo</a><span class="eyebrow">Sua coleção, seus detalhes</span><h1 class="catalog-title">Editar item</h1>
+<form class="surface form-surface" asp-action="Edit" asp-route-id="@Model.Id" method="post">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
     <partial name="_CatalogForm" model="Model" />
-    <div class="d-flex gap-2 mt-4"><button type="submit" class="btn btn-primary">Salvar alterações</button><a asp-action="Index" class="btn btn-outline-secondary">Voltar</a></div>
+    <div class="d-flex gap-2 mt-4 form-actions"><button type="submit" class="btn btn-primary">Salvar alterações</button><a asp-action="Index" class="btn btn-outline-secondary">Voltar</a></div>
 </form>

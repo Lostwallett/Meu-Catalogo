@@ -1,0 +1,12 @@
+@model string
+@{
+    var variant = Model switch
+    {
+        "Filme" => "film",
+        "Livro" => "book",
+        "Série" => "series",
+        "Jogo" => "game",
+        _ => "other"
+    };
+}
+<span class="type-label type-label--@variant">@Model</span>

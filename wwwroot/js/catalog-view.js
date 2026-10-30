@@ -13,6 +13,8 @@
         cartoes.style.display = mostrarCartoes ? 'block' : 'none';
         btnTabela.className = mostrarCartoes ? 'btn btn-outline-primary' : 'btn btn-primary';
         btnCartoes.className = mostrarCartoes ? 'btn btn-primary' : 'btn btn-outline-primary';
+        btnTabela.setAttribute('aria-pressed', String(!mostrarCartoes));
+        btnCartoes.setAttribute('aria-pressed', String(mostrarCartoes));
         localStorage.setItem('visualizacaoCatalogo', mostrarCartoes ? 'cartoes' : 'tabela');
     }
 

@@ -1,3 +1,7 @@
-@{ ViewData["Title"] = "Erro"; }
-<h1>Ocorreu um erro.</h1><p>Não foi possível concluir a solicitação. Tente novamente.</p>
-<a asp-controller="Home" asp-action="Index">Voltar ao início</a>
+@{ ViewData["Title"] = "Não foi possível continuar"; }
+<section class="empty-state">
+    <span class="eyebrow">Vamos tentar novamente</span>
+    <h1 class="catalog-title">Algo não saiu como esperado.</h1>
+    <p>Não foi possível concluir a solicitação. Tente novamente em instantes.</p>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-primary">Voltar ao início</a>
+</section>

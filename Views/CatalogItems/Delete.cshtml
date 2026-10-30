@@ -1,8 +1,8 @@
 @model CatalogItem
 @{ ViewData["Title"] = "Excluir item"; }
-<h1 class="catalog-title">Excluir item</h1>
+<a asp-action="Index" class="back-link">← Voltar ao catálogo</a><span class="eyebrow">Revisar coleção</span><h1 class="catalog-title">Excluir item</h1>
 <div class="alert alert-warning">Tem certeza de que deseja excluir <strong>@Model.Title</strong>? Essa ação não pode ser desfeita.</div>
-<form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+<form class="surface form-surface d-flex flex-wrap gap-2" asp-action="Delete" asp-route-id="@Model.Id" method="post">
     @Html.AntiForgeryToken()
     <input type="hidden" asp-for="Id" />
     <button type="submit" class="btn btn-danger">Confirmar exclusão</button>

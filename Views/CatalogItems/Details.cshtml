@@ -1,10 +1,10 @@
 @model CatalogItem
 @{ ViewData["Title"] = "Detalhes"; }
-<h1 class="catalog-title">Detalhes do item</h1>
-<div class="card"><div class="card-body">
-    <h2 class="h4">@Model.Title @if (Model.IsFavorite) { <span class="favorite-icon">♥</span> }</h2>
+<a asp-action="Index" class="back-link">← Voltar ao catálogo</a><span class="eyebrow">Um olhar mais de perto</span><h1 class="catalog-title">Detalhes do item</h1>
+<div class="card detail-card"><div class="card-body">
+    <h2 class="h4">@Model.Title @if (Model.IsFavorite) { <span class="favorite-badge"><span aria-hidden="true">♥</span> Favorito</span> }</h2>
     <dl class="row mb-0">
-        <dt class="col-sm-3">Tipo</dt><dd class="col-sm-9">@Model.Type</dd>
+        <dt class="col-sm-3">Tipo</dt><dd class="col-sm-9"><partial name="_ContentTypeBadge" model="Model.Type" /></dd>
         <dt class="col-sm-3">Autor ou diretor</dt><dd class="col-sm-9">@Model.AuthorOrDirector</dd>
         <dt class="col-sm-3">Ano</dt><dd class="col-sm-9">@Model.ReleaseYear</dd>
         <dt class="col-sm-3">Gênero</dt><dd class="col-sm-9">@Model.Genre</dd>

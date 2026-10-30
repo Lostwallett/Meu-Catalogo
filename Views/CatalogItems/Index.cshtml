@@ -2,7 +2,7 @@
 @{ ViewData["Title"] = "Meu Catálogo"; }
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-    <h1 class="catalog-title mb-0">Meu Catálogo</h1>
+    <div><span class="eyebrow">Sua coleção pessoal</span><h1 class="catalog-title mb-2">Meu Catálogo</h1><p class="page-intro">Histórias, descobertas e favoritos. Tudo do seu jeito.</p></div>
     <div class="d-flex flex-wrap gap-2">
         <a asp-action="ExportCsv" asp-route-pesquisa="@Model.Pesquisa"
            asp-route-tipo="@Model.Tipo" asp-route-ordenacao="@Model.Ordenacao"
@@ -33,7 +33,8 @@
 </div>
 
 <!-- GET deixa filtros visíveis na URL e permite compartilhar a pesquisa. -->
-<form asp-action="Index" method="get" class="mb-4">
+<form asp-action="Index" method="get" class="filter-panel mb-4">
+    <h2 class="filter-heading">Encontre na sua coleção</h2>
     <div class="row g-2 align-items-center">
         <div class="col-12 col-lg-3">
             <input name="pesquisa" value="@Model.Pesquisa" class="form-control" placeholder="Pesquisar pelo título..." aria-label="Pesquisar pelo título" />
@@ -72,34 +73,34 @@
 {
     if (Model.TotalItens == 0)
     {
-        <div class="alert alert-secondary">Seu catálogo ainda está vazio. <a asp-action="Create">Cadastre o primeiro item</a>!</div>
+        <div class="empty-state"><span class="eyebrow">Toda coleção tem um começo</span><h2>Sua próxima história começa aqui.</h2><p>Adicione um filme, um livro ou algo que você quer guardar por perto.</p><a asp-action="Create" class="btn btn-primary">Cadastrar primeiro item</a></div>
     }
     else
     {
-        <div class="alert alert-info">Nenhum item encontrado com os filtros selecionados. Tente outra pesquisa ou clique em <strong>Limpar</strong>.</div>
+        <div class="empty-state"><h2>Nenhum item por aqui.</h2><p>Tente outro título ou ajuste os filtros para encontrar o que procura.</p><a asp-action="Index" class="btn btn-outline-primary">Limpar filtros</a></div>
     }
 }
 else
 {
-    <div class="d-flex gap-2 mb-3">
+    <div class="d-flex gap-2 mb-3 view-switch" role="group" aria-label="Visualização do catálogo">
         <button type="button" id="btnTabela" class="btn btn-primary">Ver tabela</button>
         <button type="button" id="btnCartoes" class="btn btn-outline-primary">Ver cartões</button>
     </div>
 
-    <div id="visualizacaoTabela" class="table-responsive">
+    <div id="visualizacaoTabela" class="table-responsive" role="region" aria-label="Itens do catálogo em tabela" tabindex="0">
         <table class="table catalog-table align-middle">
             <thead><tr><th>Título</th><th>Tipo</th><th>Autor ou diretor</th><th>Ano</th><th>Gênero</th><th>Ações</th></tr></thead>
             <tbody>
                 @foreach (var item in Model.Items)
                 {
                     <tr>
-                        <td><strong>@item.Title</strong> @if (item.IsFavorite) { <span title="Favorito" class="favorite-icon">♥</span> }</td>
-                        <td>@item.Type</td><td>@item.AuthorOrDirector</td><td>@item.ReleaseYear</td><td>@item.Genre</td>
+                        <td><strong>@item.Title</strong> @if (item.IsFavorite) { <span class="favorite-badge"><span aria-hidden="true">♥</span> Favorito</span> }</td>
+                        <td><partial name="_ContentTypeBadge" model="item.Type" /></td><td>@item.AuthorOrDirector</td><td>@item.ReleaseYear</td><td>@item.Genre</td>
                         <td>
-                            <div class="d-flex flex-wrap gap-2">
+                            <div class="catalog-actions table-actions">
                                 <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Detalhes</a>
                                 <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Excluir</a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-delete btn-sm">Excluir</a>
                                 <form asp-action="ToggleFavorite" asp-route-id="@item.Id" method="post">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="pesquisa" value="@Model.Pesquisa" />
@@ -107,7 +108,7 @@ else
                                     <input type="hidden" name="ordenacao" value="@Model.Ordenacao" />
                                     <input type="hidden" name="somenteFavoritos" value="@Model.SomenteFavoritos.ToString().ToLowerInvariant()" />
                                     <input type="hidden" name="pagina" value="@Model.PaginaAtual" />
-                                    <button type="submit" class="btn btn-sm @(item.IsFavorite ? "btn-danger" : "btn-outline-danger")">@(item.IsFavorite ? "♥ Favorito" : "♡ Favoritar")</button>
+                                    <button type="submit" class="btn btn-sm btn-favorite @(item.IsFavorite ? "is-favorite" : "")" aria-pressed="@item.IsFavorite.ToString().ToLowerInvariant()" aria-label="@(item.IsFavorite ? "Remover dos favoritos: " : "Adicionar aos favoritos: ")@item.Title">@(item.IsFavorite ? "♥ Favorito" : "♡ Favoritar")</button>
                                 </form>
                             </div>
                         </td>
@@ -121,17 +122,22 @@ else
         <div class="row g-3">
             @foreach (var item in Model.Items)
             {
-                <div class="col-12 col-md-6 col-lg-4">
-                    <div class="catalog-card">
-                        <h3>@item.Title @if (item.IsFavorite) { <span title="Favorito" class="favorite-icon">♥</span> }</h3>
-                        <p><strong>Tipo:</strong> @item.Type</p>
+                <div class="col-12 col-md-6 col-lg-4 col-xxl-3 d-flex">
+                    <div class="catalog-card w-100">
+                        <div class="card-labels">
+                            <partial name="_ContentTypeBadge" model="item.Type" />
+                            @if (item.IsFavorite) { <span class="favorite-badge"><span aria-hidden="true">♥</span> Favorito</span> }
+                        </div>
+                        <div class="catalog-card-body">
+                        <h3>@item.Title</h3>
                         <p><strong>Autor ou diretor:</strong> @item.AuthorOrDirector</p>
                         <p><strong>Ano:</strong> @item.ReleaseYear</p>
                         <p><strong>Gênero:</strong> @item.Genre</p>
-                        <div class="d-flex flex-wrap gap-2 mt-3">
+                        </div>
+                        <div class="catalog-actions card-actions">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Detalhes</a>
                             <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-warning btn-sm">Editar</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger btn-sm">Excluir</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-delete btn-sm">Excluir</a>
                             <form asp-action="ToggleFavorite" asp-route-id="@item.Id" method="post">
                                 @Html.AntiForgeryToken()
                                 <input type="hidden" name="pesquisa" value="@Model.Pesquisa" />
@@ -139,7 +145,7 @@ else
                                 <input type="hidden" name="ordenacao" value="@Model.Ordenacao" />
                                 <input type="hidden" name="somenteFavoritos" value="@Model.SomenteFavoritos.ToString().ToLowerInvariant()" />
                                 <input type="hidden" name="pagina" value="@Model.PaginaAtual" />
-                                <button type="submit" class="btn btn-sm @(item.IsFavorite ? "btn-danger" : "btn-outline-danger")">@(item.IsFavorite ? "♥ Favorito" : "♡ Favoritar")</button>
+                                <button type="submit" class="btn btn-sm btn-favorite @(item.IsFavorite ? "is-favorite" : "")" aria-pressed="@item.IsFavorite.ToString().ToLowerInvariant()" aria-label="@(item.IsFavorite ? "Remover dos favoritos: " : "Adicionar aos favoritos: ")@item.Title">@(item.IsFavorite ? "♥ Favorito" : "♡ Favoritar")</button>
                             </form>
                         </div>
                     </div>

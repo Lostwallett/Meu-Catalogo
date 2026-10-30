@@ -1,6 +1,22 @@
 @{ ViewData["Title"] = "Início"; }
-<section class="hero p-5 rounded-4">
-    <h1 class="display-5 fw-bold">Bem-vindo ao MyCatalog!</h1>
-    <p class="lead">Organize filmes, séries, livros, jogos e tudo o que faz parte da sua coleção.</p>
-    <a asp-controller="CatalogItems" asp-action="Index" class="btn btn-primary btn-lg">Explorar meu catálogo</a>
+<section class="hero">
+    <div class="row align-items-center g-4">
+        <div class="col-lg-8">
+            <span class="eyebrow">Suas histórias, em um só lugar</span>
+            <h1>Uma coleção com<br />a sua personalidade.</h1>
+            <p class="lead mb-4">Dos livros que ficam na memória aos filmes que merecem um replay. Organize, encontre e redescubra o que você gosta.</p>
+            <div class="d-flex flex-wrap gap-2">
+                <a asp-controller="CatalogItems" asp-action="Index" class="btn btn-primary btn-lg">Explorar meu catálogo <span aria-hidden="true">→</span></a>
+                <a asp-controller="CatalogItems" asp-action="Create" class="btn btn-outline-primary btn-lg">Adicionar um item</a>
+            </div>
+        </div>
+        <div class="col-lg-4" aria-hidden="true">
+            <div class="hero-art"><span class="book">HISTÓRIAS</span><span class="book">CINEMA</span><span class="book">DESCOBERTAS</span><span class="book">FAVORITOS</span></div>
+        </div>
+    </div>
+</section>
+<section class="row g-4 mt-4" aria-label="O que você pode fazer">
+    <div class="col-md-4"><div class="feature-card"><span class="eyebrow">01 / Organize</span><h2>Cada interesse tem seu espaço.</h2><p>Filmes, séries, livros, jogos e outros conteúdos. Guarde os detalhes que tornam cada item especial.</p></div></div>
+    <div class="col-md-4"><div class="feature-card"><span class="eyebrow">02 / Encontre</span><h2>Menos procura. Mais descobertas.</h2><p>Pesquise por título, combine filtros e destaque seus favoritos. Veja sua coleção em tabela ou cartões.</p></div></div>
+    <div class="col-md-4"><div class="feature-card"><span class="eyebrow">03 / Leve com você</span><h2>Sua coleção além da tela.</h2><p>Exporte os resultados para CSV e consulte seus itens em uma planilha, com os filtros que você escolher.</p></div></div>
 </section>
