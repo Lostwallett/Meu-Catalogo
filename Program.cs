@@ -12,6 +12,16 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var result = await CatalogSeedData.InitializeAsync(context);
+    app.Logger.LogInformation(
+        "Dados demonstrativos: {Added} adicionados e {Existing} já existentes. Registros existentes preservados.",
+        result.Added, result.Existing);
+}
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
