@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using MyCatalog.Data;
 using MyCatalog.Models;
 using MyCatalog.Services;
+using MyCatalog.Services.Covers;
+using Microsoft.Extensions.Options;
 
 namespace MyCatalog.Controllers;
 
@@ -10,8 +12,13 @@ public class CatalogItemsController : Controller
 {
     private readonly ApplicationDbContext _context;
     private const int ItensPorPagina = 10;
+    private readonly bool _coversEnabled;
 
-    public CatalogItemsController(ApplicationDbContext context) => _context = context;
+    public CatalogItemsController(ApplicationDbContext context, IOptions<BookCoverOptions> coverOptions)
+    {
+        _context = context;
+        _coversEnabled = coverOptions.Value.Enabled;
+    }
 
     // GET: /CatalogItems
     // Aplica pesquisa, tipo, favoritos e ordenação ANTES da paginação.
@@ -28,6 +35,7 @@ public class CatalogItemsController : Controller
         pagina = Math.Clamp(pagina, 1, totalPaginas);
 
         // Skip ignora registros das páginas anteriores; Take limita a página atual.
+        if (_coversEnabled) query = query.Include(x => x.Cover);
         var itens = await query.Skip((pagina - 1) * ItensPorPagina)
                                .Take(ItensPorPagina).ToListAsync();
 
@@ -99,7 +107,9 @@ public class CatalogItemsController : Controller
     public async Task<IActionResult> Details(int? id)
     {
         if (id is null) return NotFound();
-        var item = await _context.CatalogItems.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        var query = _context.CatalogItems.AsNoTracking();
+        if (_coversEnabled) query = query.Include(x => x.Cover);
+        var item = await query.FirstOrDefaultAsync(x => x.Id == id);
         return item is null ? NotFound() : View(item);
     }
 

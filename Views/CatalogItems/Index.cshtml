@@ -119,20 +119,28 @@ else
     </div>
 
     <div id="visualizacaoCartoes" style="display:none">
+        <div class="cover-experiment-bar">
+            <p class="mb-0"><strong>Capas da coleção</strong><span> Escolha a edição dos seus livros nos detalhes. As outras ilustrações são demonstrativas e não oficiais.</span></p>
+            <button type="button" id="btnCapas" class="btn btn-outline-secondary btn-sm" aria-pressed="true" aria-controls="gradeCartoes" hidden>Ocultar capas</button>
+        </div>
+        <div id="gradeCartoes" class="covers-enabled">
         <div class="row g-3">
             @foreach (var item in Model.Items)
             {
                 <div class="col-12 col-md-6 col-lg-4 col-xxl-3 d-flex">
                     <div class="catalog-card w-100">
+                        <partial name="_CatalogCover" model="item" />
                         <div class="card-labels">
                             <partial name="_ContentTypeBadge" model="item.Type" />
                             @if (item.IsFavorite) { <span class="favorite-badge"><span aria-hidden="true">♥</span> Favorito</span> }
                         </div>
                         <div class="catalog-card-body">
                         <h3>@item.Title</h3>
+                        <div class="catalog-card-metadata">
                         <p><strong>Autor ou diretor:</strong> @item.AuthorOrDirector</p>
                         <p><strong>Ano:</strong> @item.ReleaseYear</p>
                         <p><strong>Gênero:</strong> @item.Genre</p>
+                        </div>
                         </div>
                         <div class="catalog-actions card-actions">
                             <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">Detalhes</a>
@@ -151,6 +159,7 @@ else
                     </div>
                 </div>
             }
+        </div>
         </div>
     </div>
 }
@@ -177,4 +186,5 @@ else
 
 @section Scripts {
     <script src="~/js/catalog-view.js" asp-append-version="true"></script>
+    <script src="~/js/catalog-covers.js" asp-append-version="true"></script>
 }

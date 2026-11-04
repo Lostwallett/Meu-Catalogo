@@ -1,0 +1,130 @@
+@model BookCoverSearchViewModel
+@using MyCatalog.Services.Covers
+@{ ViewData["Title"] = "Escolher capa"; }
+<a asp-controller="CatalogItems" asp-action="Details" asp-route-id="@Model.Item.Id" class="back-link">← Voltar aos detalhes</a>
+<span class="eyebrow">A edição faz a diferença</span>
+<h1 class="catalog-title">Uma capa para seu livro</h1>
+<p class="page-intro mb-4">Item: <strong>@Model.Item.Title</strong>. A pesquisa e a escolha da imagem não alteram as informações do livro.</p>
+
+@if (Model.Message is not null)
+{
+    <div class="alert alert-warning" role="status">@Model.Message</div>
+}
+@if (Model.Item.Cover is not null)
+{
+    <section class="surface p-3 mb-4" aria-label="Capa associada">
+        <h2 class="h5">Capa atual</h2>
+        <div class="detail-cover-preview"><partial name="~/Views/CatalogItems/_CatalogCover.cshtml" model="Model.Item" /></div>
+        <form asp-action="Remove" asp-route-id="@Model.Item.Id" method="post">
+            <input type="hidden" name="token" value="@Model.RemoveToken" />
+            <p class="text-muted">Esta ação remove somente a associação da imagem. O livro será mantido.</p>
+            <button class="btn btn-outline-secondary" type="submit">Remover associação da capa</button>
+        </form>
+    </section>
+}
+@if (Model.Configured)
+{
+    <form asp-action="Index" method="get" class="filter-panel mb-4">
+        <input type="hidden" name="id" value="@Model.Item.Id" />
+        <input type="hidden" name="search" value="true" />
+        <div asp-validation-summary="All" class="text-danger"></div>
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5"><label asp-for="Title" class="form-label">Título para pesquisa</label><input asp-for="Title" class="form-control" /></div>
+            <div class="col-md-5"><label asp-for="Author" class="form-label">Autor para pesquisa</label><input asp-for="Author" class="form-control" /></div>
+            <div class="col-md-2"><button type="submit" class="btn btn-primary w-100">Pesquisar</button></div>
+        </div>
+        <p class="text-muted small mt-3 mb-0">Ao pesquisar, título e autor serão enviados à Open Library. Confira a obra e a edição antes de confirmar a imagem.</p>
+    </form>
+}
+@if (Model.Works.Count > 0)
+{
+    <h2 class="h4 mb-3">1. Escolha a obra</h2>
+    <p class="small text-muted">Correspondências de título e autor mais próximas aparecem primeiro entre os resultados desta página.</p>
+    <div class="d-grid gap-3">
+    @foreach (var result in Model.Works)
+    {
+        <article class="surface p-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div><h3 class="h5">@result.Work.Title</h3><p class="mb-0 text-muted">@result.Work.Authors · @result.Work.EditionCount edições</p></div>
+            <a asp-action="Index" asp-route-id="@Model.Item.Id" asp-route-workToken="@result.Token" class="btn btn-outline-primary">Ver edições e capas</a>
+        </article>
+    }
+    </div>
+}
+@if (Model.WorkToken is not null && Model.Message is null)
+{
+    <h2 class="h4">2. Confira a edição e confirme a capa</h2>
+    <p class="text-muted">@Model.SelectedWorkTitle · @Model.SelectedWorkAuthors. Edições em português aparecem primeiro entre as edições carregadas; os demais idiomas continuam disponíveis. O ano da edição pode ser diferente do lançamento original.</p>
+    <p class="small"><a href="https://openlibrary.org/works/@Model.SelectedWorkId" rel="noopener noreferrer">Consultar a obra e suas edições na Open Library</a></p>
+    <p class="small text-muted">@Model.EditionGroups.Count opções agrupadas nas páginas carregadas. O agrupamento usa identificadores de capa, edição e ISBN confirmado por metadados; não compara a aparência das imagens.</p>
+    <div class="cover-search-grid" id="resultadosCapas">
+    @foreach (var group in Model.EditionGroups)
+    {
+        var result = group.Primary;
+        <article class="surface cover-search-card" data-cover-candidate>
+            <div class="cover-frame">
+                <div class="cover-fallback"><span class="cover-fallback-title">@result.Cover.Title</span><span>Prévia indisponível</span></div>
+                <img class="cover-image" data-cover-id="@result.Cover.CoverId" src="@OpenLibraryReferences.ImageUrl(result.Cover.CoverId, true)" alt="Capa da edição @result.Cover.Title" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="400" height="600" />
+            </div>
+            <h3 class="h5">@result.Cover.Title</h3>
+            <partial name="_EditionMetadata" model="result.Cover" />
+            <a href="https://openlibrary.org/books/@result.Cover.EditionId" rel="noopener noreferrer" class="small">Ver edição na Open Library</a>
+            <form asp-action="Select" asp-route-id="@Model.Item.Id" method="post" class="mt-auto pt-3">
+                <input type="hidden" name="token" value="@result.Token" />
+                <button type="submit" class="btn btn-primary w-100" data-cover-confirm data-cover-id="@result.Cover.CoverId" disabled>Usar esta capa</button>
+            </form>
+            @if (group.Editions.Count > 1)
+            {
+                <details class="cover-edition-alternatives">
+                    <summary>Consultar edições e imagens (@group.EditionCount @(group.EditionCount == 1 ? "edição" : "edições") · @group.ImageCount @(group.ImageCount == 1 ? "referência de imagem" : "referências de imagem"))</summary>
+                    <p class="small text-muted">Referências relacionadas por metadados podem ter imagens diferentes. Confira a prévia e os dados da opção escolhida.</p>
+                    @{ var shownImages = new HashSet<long> { result.Cover.CoverId }; }
+                    @foreach (var alternative in group.Editions.Skip(1))
+                    {
+                        <section class="cover-edition-option" aria-label="Edição alternativa">
+                            <h4 class="h6">@alternative.Cover.Title</h4>
+                            @if (shownImages.Add(alternative.Cover.CoverId))
+                            {
+                                <div class="cover-frame cover-alternative-preview">
+                                    <div class="cover-fallback"><span>Prévia indisponível</span></div>
+                                    <img class="cover-image" data-cover-id="@alternative.Cover.CoverId" src="@OpenLibraryReferences.ImageUrl(alternative.Cover.CoverId, true)" alt="Outra imagem da edição @alternative.Cover.Title" loading="lazy" decoding="async" referrerpolicy="no-referrer" width="400" height="600" />
+                                </div>
+                            }
+                            <partial name="_EditionMetadata" model="alternative.Cover" />
+                            <a href="https://openlibrary.org/books/@alternative.Cover.EditionId" rel="noopener noreferrer" class="small">Ver esta edição na Open Library</a>
+                            <form asp-action="Select" asp-route-id="@Model.Item.Id" method="post" class="mt-3">
+                                <input type="hidden" name="token" value="@alternative.Token" />
+                                <button type="submit" class="btn btn-outline-primary w-100" data-cover-confirm data-cover-id="@alternative.Cover.CoverId" disabled>Usar esta edição e imagem</button>
+                            </form>
+                        </section>
+                    }
+                </details>
+            }
+        </article>
+    }
+    </div>
+}
+@if (Model.Searched && Model.Message is null && Model.Works.Count == 0 && Model.Editions.Count == 0)
+{
+    <div class="empty-state mt-3"><h2>Nenhuma capa nesta página.</h2><p>Você pode ajustar título e autor ou consultar a próxima página de edições, quando disponível.</p></div>
+}
+@if (Model.Searched && Model.Message is null)
+{
+    <nav class="d-flex flex-wrap gap-2 mt-4" aria-label="Paginação da pesquisa de capas">
+    @if (Model.Page > 1 && Model.WorkToken is null)
+    {
+        <a asp-action="Index" asp-route-id="@Model.Item.Id" asp-route-title="@Model.Title" asp-route-author="@Model.Author" asp-route-search="true" asp-route-workToken="@Model.WorkToken" asp-route-page="@(Model.Page - 1)" class="btn btn-outline-secondary">Anterior</a>
+    }
+    @if (Model.HasNext && Model.Page < (Model.WorkToken is null ? 100 : BookCoverSearchViewModel.MaxEditionPages))
+    {
+        <a asp-action="Index" asp-route-id="@Model.Item.Id" asp-route-title="@Model.Title" asp-route-author="@Model.Author" asp-route-search="true" asp-route-workToken="@Model.WorkToken" asp-route-page="@(Model.Page + 1)" class="btn btn-outline-primary">@(Model.WorkToken is null ? "Próxima página" : "Carregar mais edições")</a>
+    }
+    </nav>
+    @if (Model.WorkToken is not null && Model.HasNext && Model.Page >= BookCoverSearchViewModel.MaxEditionPages)
+    {
+        <p class="small text-muted mt-3">Foram consultadas até 100 edições desta obra. O limite evita buscas extensas; o link da Open Library permite consultar o catálogo completo da fonte.</p>
+    }
+}
+<p class="small text-muted mt-4">Pesquisa e imagens fornecidas pela <a href="https://openlibrary.org" rel="noopener noreferrer">Open Library</a>. As capas podem variar entre edições e podem ficar indisponíveis. A confirmação é habilitada após carregar a prévia; JavaScript precisa estar ativo.</p>
+@section Scripts {
+    <script src="~/js/catalog-covers.js" asp-append-version="true"></script>
+}

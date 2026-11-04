@@ -26,7 +26,8 @@ O projeto foi desenvolvido para praticar desenvolvimento backend com C# e ASP.NE
 - Visualização em tabela ou cartões, com preferência salva no `localStorage` do navegador.
 - Dados demonstrativos para facilitar a exploração da aplicação em desenvolvimento.
 - Exportação CSV dos resultados da pesquisa e dos filtros aplicados.
-- Testes automatizados do gerador CSV e da rotina de dados demonstrativos.
+- Testes automatizados do gerador CSV, seed e integração de capas com HTTP simulado.
+- Nesta branch: pesquisa de capas de livros por obra e edição, seleção manual e associação persistente. Desabilitada por padrão até configurar um banco isolado e um contato válido; veja [o procedimento seguro](docs/CAPAS-OPEN-LIBRARY.md).
 
 ### Dados demonstrativos
 
@@ -72,6 +73,8 @@ tests/MyCatalog.Tests/       Projeto xUnit e documentação dos testes
 
 ## Executar localmente
 
+Nesta máquina, o teste manual de capas já possui banco e perfis isolados. Consulte o [passo a passo para o Visual Studio](docs/TESTE-MANUAL-CAPAS.md). A API continua desativada até configurar um contato válido e autorizar seu uso.
+
 ### Pré-requisitos
 
 - Windows, para usar a configuração atual de SQL Server LocalDB.
@@ -103,33 +106,18 @@ A configuração `ConnectionStrings:DefaultConnection` está em `appsettings.jso
 
 A conexão utiliza autenticação integrada do Windows, sem senha no arquivo. Confirme a instância e o nome do banco antes de aplicar o esquema. Quem já possui esse banco com a migration aplicada não precisa recriá-lo.
 
-### 3. Preparar o esquema em uma instalação nova
+### 3. Preparar um banco isolado nesta branch
 
-O repositório já inclui a migration `20261028232319_InitialCreate`. **Não é necessário executar `Add-Migration` nem gerar outra migration para iniciar o projeto.**
+A branch `experimento/capas-catalogo` inclui a migration inicial e a migration aditiva
+`AddCatalogItemCover`. **Não gere outra migration e não aplique mudanças em `MyCatalogCompletoDb`.**
 
-No Visual Studio:
+A factory de design exige uma conexão isolada explícita e bloqueia o nome do banco
+principal. Siga o procedimento completo em [Capas pela Open Library](docs/CAPAS-OPEN-LIBRARY.md),
+que prepara um novo banco, aplica o esquema e define a conexão da aplicação na mesma
+janela do terminal. A aplicação não executa migrations automaticamente.
 
-1. Abra `MyCatalog.slnx` e defina **MyCatalog** como projeto de inicialização.
-2. Abra **Ferramentas > Gerenciador de Pacotes NuGet > Console do Gerenciador de Pacotes**.
-3. Selecione **MyCatalog** como projeto padrão e execute:
-
-```powershell
-Update-Database
-```
-
-Alternativamente, no terminal da raiz do repositório, com a ferramenta `dotnet-ef` disponível em versão compatível com o EF Core do projeto:
-
-```powershell
-dotnet ef database update --project MyCatalog.csproj
-```
-
-Se a ferramenta ainda não estiver instalada:
-
-```powershell
-dotnet tool install --global dotnet-ef --version 10.0.14
-```
-
-Esses comandos de atualização aplicam as migrations pendentes ao banco configurado. A aplicação não faz essa etapa automaticamente.
+Quem já utiliza o banco original pode manter `BookCovers:Enabled=false` e continuar
+usando as funcionalidades anteriores sem aplicar a nova migration.
 
 ### 4. Iniciar a aplicação
 
@@ -160,14 +148,16 @@ No Visual Studio, abra **Teste > Gerenciador de Testes** e escolha **Executar To
 
 Os testes CSV executam o serviço diretamente. Cada teste de persistência utiliza um banco SQLite privado em memória, descartado quando a conexão é fechada. Os testes não iniciam `Program.cs`, não leem a conexão da aplicação e não acessam o LocalDB principal.
 
-A suíte atual contém **23 casos**, cobrindo:
+A suíte atual contém **111 casos** (incluindo os 23 originais), cobrindo:
 
 - Cabeçalho em português, separador, BOM, acentos, campos opcionais e favoritos.
 - Escape de aspas e quebras de linha, preservação da ordem recebida e proteção contra fórmulas.
 - Inserção dos 25 exemplos, execução repetida sem duplicações e comparação por título e tipo.
 - Preservação de registros existentes e de edições posteriores em seus demais campos.
+- Respostas e erros da Open Library por HTTP simulado, identificação, cache, limites e cancelamento.
+- Tokens de seleção, associação persistente, concorrência e preservação do CSV.
 
-Na verificação desta atualização de documentação, a compilação terminou sem avisos ou erros e os 23 testes passaram, sem falhas ou casos ignorados. A suíte não cobre todo o fluxo MVC, a interface ou particularidades de concorrência do SQL Server.
+Na verificação desta atualização de documentação, a compilação terminou sem avisos ou erros e os 111 testes passaram, sem falhas ou casos ignorados. A suíte não cobre todo o fluxo MVC, a interface ou particularidades de concorrência do SQL Server.
 
 Mais detalhes em [tests/MyCatalog.Tests/README.md](tests/MyCatalog.Tests/README.md).
 
@@ -190,7 +180,7 @@ As ideias abaixo **ainda não estão implementadas** e não representam funciona
 - Mais testes de integração para controllers, filtros e exportação HTTP, além de testes de interface.
 - Pipeline de integração contínua no GitHub Actions para build e testes.
 - Configuração de implantação e banco adequada a um ambiente de produção.
-- Imagens de capa e novas opções de organização dos itens.
+- Integração de capas para filmes, séries e jogos; novas opções de organização dos itens.
 - Distribuição local do Bootstrap para reduzir a dependência de CDN.
 
 A versão atual concentra-se no catálogo MVC com persistência local, dados demonstrativos, exportação CSV e testes dos serviços descritos acima.

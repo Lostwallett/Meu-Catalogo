@@ -9,4 +9,17 @@ public class ApplicationDbContext : DbContext
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
     public DbSet<CatalogItem> CatalogItems => Set<CatalogItem>();
+    public DbSet<CatalogItemCover> CatalogItemCovers => Set<CatalogItemCover>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.Entity<CatalogItemCover>(cover =>
+        {
+            cover.HasKey(x => x.CatalogItemId);
+            cover.HasOne<CatalogItem>().WithOne(x => x.Cover)
+                .HasForeignKey<CatalogItemCover>(x => x.CatalogItemId).OnDelete(DeleteBehavior.Cascade);
+            cover.Property(x => x.Version).IsConcurrencyToken();
+        });
+    }
 }

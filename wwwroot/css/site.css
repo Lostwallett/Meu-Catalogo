@@ -115,3 +115,65 @@ h1, .hero h2 { font-family: Georgia, 'Times New Roman', serif; letter-spacing: -
 @media (max-width: 575px) { .catalog-actions .btn { min-height: 42px; } .catalog-card h3 { font-size: 1.4rem; } .catalog-table td:nth-child(3), .catalog-table td:nth-child(5) { min-width: 145px; } }
 @media (max-width: 767px) { main { padding-top: 1.5rem; } .site-nav { padding: 1rem .75rem; } .nav-links .nav-link { padding: .45rem .6rem; } .brand { font-size: 1rem; } .hero-art { min-height: 180px; padding-top: 1rem; } .book { height: 140px; width: 50px; } .book:nth-child(2) { height: 120px; } .book:nth-child(3) { height: 160px; } .book:nth-child(4) { height: 135px; } .filter-panel { padding: 1rem; } .form-actions .btn { flex-grow: 1; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+
+/* Experimento de capas: estilos limitados à grade de cartões. */
+.cover-experiment-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: .8rem; margin-bottom: 1.2rem; padding: .9rem 1.1rem; background: #edf1e8; border: 1px solid var(--line); border-radius: 12px; font-size: .85rem; color: var(--muted); }
+.cover-experiment-bar strong { color: var(--ink); }
+.cover-experiment-bar .btn { flex-shrink: 0; }
+.catalog-cover { display: none; margin: 0 0 1.2rem; }
+.covers-enabled .catalog-cover { display: block; }
+.cover-frame { position: relative; aspect-ratio: 2 / 3; overflow: hidden; border-radius: 9px; border: 1px solid #d7dfd0; background: #e9ede2; isolation: isolate; container-type: inline-size; }
+.cover-image { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; z-index: 1; background: #e9ede2; }
+.cover-fallback { --cover-base: #e9e2cc; --cover-ink: #254b3d; --cover-detail: #ac644b; position: absolute; inset: 0; display: flex; flex-direction: column; gap: .9rem; padding: 8%; color: var(--cover-ink); background: var(--cover-base); }
+.cover-fallback::before { content: ''; position: absolute; inset: 4%; border: 1px solid currentColor; opacity: .2; border-radius: 2px; pointer-events: none; }
+.cover-fallback--film { --cover-base: #254b3d; --cover-ink: #f2e8cf; --cover-detail: #c58b69; }
+.cover-fallback--series { --cover-base: #e7d8c7; --cover-ink: #4c423a; --cover-detail: #98634d; }
+.cover-fallback--game { --cover-base: #dce5d3; --cover-ink: #284d3b; --cover-detail: #ad7051; }
+.cover-fallback--other { --cover-base: #ede7da; --cover-ink: #4f5946; --cover-detail: #a4634d; }
+.cover-fallback-category { position: relative; font-size: clamp(.6rem, 3.6cqi, .75rem); line-height: 1.5; letter-spacing: .09em; font-weight: 650; text-transform: uppercase; }
+.cover-fallback-category span { padding-inline: .3em; color: var(--cover-detail); }
+.cover-fallback-art { position: relative; flex: 1; min-height: 35px; margin-block: .5rem; }
+.cover-fallback-art span { position: absolute; width: 48%; aspect-ratio: 1; border-radius: 50%; border: 1px solid currentColor; left: 8%; top: 4%; }
+.cover-fallback-art span:nth-child(2) { left: 30%; top: 18%; background: var(--cover-detail); border-color: var(--cover-detail); opacity: .8; }
+.cover-fallback-art span:nth-child(3) { left: 48%; top: 4%; width: 29%; border-radius: 0; transform: rotate(35deg); }
+.cover-fallback[hidden] { display: none; }
+.cover-fallback-title { position: relative; font: clamp(1.15rem, 9cqi, 2.25rem)/1.12 Georgia, serif; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.cover-fallback-title--compact { font-size: clamp(.85rem, 6cqi, 1.5rem); }
+.cover-fallback-note { position: relative; padding-top: .7rem; border-top: 1px solid currentColor; font-size: clamp(.6rem, 3.3cqi, .72rem); line-height: 1.5; }
+.catalog-cover figcaption { min-height: 3.3em; padding-top: .6rem; font-size: .7rem; line-height: 1.4; color: var(--muted); }
+.catalog-cover figcaption a { color: var(--muted); }
+@media (max-width: 575px) { .cover-frame { max-width: 300px; margin-inline: auto; } .catalog-cover figcaption { text-align: center; } }
+
+/* Alinha as faixas dos cartões por linha; navegadores antigos mantêm o layout flex. */
+@supports (grid-template-rows: subgrid) {
+    #gradeCartoes { --card-rows: 4; }
+    #gradeCartoes.covers-enabled { --card-rows: 5; }
+    #gradeCartoes > .row { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin: 0; }
+    #gradeCartoes > .row > div { display: grid !important; grid-template-rows: subgrid; grid-row: span var(--card-rows); width: auto; max-width: none; padding: 0; margin: 0; }
+    #gradeCartoes .catalog-card { display: grid; grid-template-rows: subgrid; grid-row: span var(--card-rows); row-gap: .9rem; }
+    #gradeCartoes .catalog-card-body { display: contents; }
+    #gradeCartoes .catalog-cover, #gradeCartoes .card-labels, #gradeCartoes h3 { margin-bottom: 0; }
+    #gradeCartoes .card-actions { margin-top: 0; }
+    #gradeCartoes .catalog-card-metadata p:last-child { margin-bottom: 0; }
+    @media (min-width: 768px) { #gradeCartoes > .row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @media (min-width: 992px) { #gradeCartoes > .row { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (min-width: 1400px) { #gradeCartoes > .row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+}
+
+/* Pesquisa de capas de livros. */
+.detail-cover-preview { max-width: 210px; margin-bottom: 1.5rem; }
+.detail-cover-preview .catalog-cover { display: block; }
+.cover-search-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 1rem; }
+.cover-search-card { display: flex; flex-direction: column; gap: .8rem; padding: 1.2rem; min-width: 0; }
+.cover-search-card .cover-frame { max-width: 260px; width: 100%; align-self: center; }
+.cover-search-card h3, .cover-search-card dd { overflow-wrap: anywhere; }
+
+/* Edições diferentes compartilham uma única prévia de capa. */
+.cover-edition-alternatives { border-top: 1px solid var(--line); padding-top: .8rem; font-size: .85rem; }
+.cover-edition-alternatives summary { cursor: pointer; color: var(--brand-dark); font-weight: 650; padding: .45rem 0; }
+.cover-edition-option { padding-top: 1rem; margin-top: 1rem; border-top: 1px solid var(--line); }
+.cover-edition-metadata { margin: 0; }
+.cover-edition-metadata dt { color: var(--muted); font-weight: 600; }
+.cover-edition-metadata dd { margin-bottom: .6rem; overflow-wrap: anywhere; }
+.cover-edition-metadata dd:last-child { margin-bottom: 0; }
+.cover-search-card .cover-alternative-preview { max-width: 160px; margin: .7rem 0; }

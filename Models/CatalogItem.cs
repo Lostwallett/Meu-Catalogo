@@ -7,6 +7,8 @@ public class CatalogItem
 {
     public int Id { get; set; }
 
+    public CatalogItemCover? Cover { get; set; }
+
     [Required(ErrorMessage = "Informe o título.")]
     [StringLength(150)]
     [Display(Name = "Título")]

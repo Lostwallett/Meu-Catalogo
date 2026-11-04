@@ -20,3 +20,9 @@ e de edições posteriores. O SQLite verifica persistência e transações relac
 mas não substitui testes específicos de concorrência ou configuração do SQL Server.
 O seed identifica exemplos por título e tipo; renomear esses campos pode fazer com
 que um exemplo original seja considerado ausente numa execução posterior.
+
+A suíte tem 111 casos: os 23 originais, 37 de integração de capas, 6 de proteção do ambiente manual isolado, 30 de relevância e idiomas e 15 de identidade bibliográfica e agrupamento por metadados. As respostas HTTP são
+simuladas com HttpMessageHandler e nunca usam a internet. O contato example.invalid
+existe somente nos testes offline e não deve ser usado na configuração da aplicação.
+Os testes verificam também que o modo desabilitado funciona sem a tabela de capas.
+Veja `docs/CAPAS-OPEN-LIBRARY.md` para a validação separada da migration SQL Server.

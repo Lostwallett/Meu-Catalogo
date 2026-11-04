@@ -1,0 +1,52 @@
+@model CatalogItem
+@using MyCatalog.Services.Covers
+@{
+    var categoryStyle = Model.Type.Trim().ToUpperInvariant() switch
+    {
+        "FILME" => "film", "LIVRO" => "book", "SÉRIE" => "series",
+        "JOGO" => "game", _ => "other"
+    };
+    // Ilustrações demonstrativas mantidas somente para os outros tipos.
+    var cover = (Model.Type.Trim().ToUpperInvariant(), Model.Title.Trim().ToUpperInvariant()) switch
+    {
+        ("FILME", "A VIAGEM DE CHIHIRO") => (Image: "~/images/covers-demo/chihiro.svg", Source: "", Real: false),
+        ("FILME", "INTERESTELAR") => (Image: "~/images/covers-demo/interestelar.svg", Source: "", Real: false),
+        ("SÉRIE", "DARK") => (Image: "~/images/covers-demo/dark.svg", Source: "", Real: false),
+        ("SÉRIE", "STRANGER THINGS") => (Image: "~/images/covers-demo/stranger-things.svg", Source: "", Real: false),
+        ("JOGO", "STARDEW VALLEY") => (Image: "~/images/covers-demo/stardew-valley.svg", Source: "", Real: false),
+        ("JOGO", "MINECRAFT") => (Image: "~/images/covers-demo/minecraft.svg", Source: "", Real: false),
+        _ => (Image: "", Source: "", Real: false)
+    };
+    if (Model.Type == "Livro" && OpenLibraryReferences.ImageUrl(Model.Cover) is { } image)
+        cover = (image, OpenLibraryReferences.SourceUrl(Model.Cover)!, true);
+}
+<figure class="catalog-cover">
+    <div class="cover-frame">
+        <div class="cover-fallback cover-fallback--@categoryStyle">
+            <span class="cover-fallback-category">@Model.Type <span aria-hidden="true">/</span> Meu Catálogo</span>
+            <div class="cover-fallback-art" aria-hidden="true"><span></span><span></span><span></span></div>
+            <span class="cover-fallback-title @(Model.Title.Length > 60 ? "cover-fallback-title--compact" : "")">@Model.Title</span>
+            <span class="cover-fallback-note">Composição demonstrativa<br />Capa oficial não disponível</span>
+        </div>
+        @if (!string.IsNullOrEmpty(cover.Image))
+        {
+            <img src="@Url.Content(cover.Image)" class="cover-image" width="400" height="600"
+                 loading="lazy" decoding="async" referrerpolicy="no-referrer"
+                 alt="@(cover.Real ? "Capa de uma edição de " : "Ilustração demonstrativa para ")@Model.Title" />
+        }
+    </div>
+    <figcaption>
+        @if (cover.Real)
+        {
+            <a href="@cover.Source" rel="noopener noreferrer">Capa de edição · Open Library</a>
+        }
+        else if (!string.IsNullOrEmpty(cover.Image))
+        {
+            <span>Ilustração demonstrativa · não oficial</span>
+        }
+        else
+        {
+            <span>Composição demonstrativa · não oficial</span>
+        }
+    </figcaption>
+</figure>

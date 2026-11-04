@@ -1,0 +1,12 @@
+@model MyCatalog.Services.Covers.CoverCandidate
+@using MyCatalog.Services.Covers
+@if (CoverLanguages.IsPortuguese(Model.Languages))
+{
+    <span class="type-label type-label--book align-self-start">Edição em português</span>
+}
+<dl class="small cover-edition-metadata">
+    <dt>Editora</dt><dd>@Model.Publishers</dd>
+    <dt>Publicação da edição</dt><dd>@Model.PublishDate</dd>
+    <dt>Idioma</dt><dd>@CoverLanguages.Display(Model.Languages)</dd>
+    <dt>ISBN</dt><dd>@Model.Isbn</dd>
+</dl>

@@ -1,0 +1,13 @@
+@model CatalogItem
+@inject Microsoft.Extensions.Options.IOptions<MyCatalog.Services.Covers.BookCoverOptions> CoverOptions
+@if (Model.Type == "Livro")
+{
+    @if (CoverOptions.Value.Enabled)
+    {
+        <a asp-controller="CatalogCovers" asp-action="Index" asp-route-id="@Model.Id" class="btn btn-outline-primary">Escolher ou trocar capa</a>
+    }
+    else
+    {
+        <p class="text-muted mt-3 mb-0">A pesquisa de capas está desabilitada nesta configuração.</p>
+    }
+}
