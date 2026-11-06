@@ -1,11 +1,13 @@
 # Capas de livros pela Open Library
 
-Implementação na branch `experimento/capas-catalogo`. A funcionalidade está **desabilitada
-por padrão**, pois a migration ainda não foi autorizada no banco principal.
+Integração incorporada à `main`. A migration `AddCatalogItemCover` foi aplicada e validada
+no banco principal durante os testes locais, após um ensaio isolado. Os 25 registros foram
+preservados; a seleção de capa para 1984 e sua persistência após reiniciar foram confirmadas
+na validação manual. Esse histórico não significa que o esquema já exista em uma instalação nova.
 
-Para a máquina atual, já existe um banco separado e perfis específicos do Visual Studio.
-Use primeiro o [guia do ambiente manual preparado](TESTE-MANUAL-CAPAS.md); não é necessário
-reaplicar migrations nesse banco. O procedimento genérico abaixo serve para instalações novas.
+A integração continua **desativada por padrão**, para exigir configuração explícita do banco
+e do contato de identificação. Use o [guia de validação manual](TESTE-MANUAL-CAPAS.md)
+para conferir o fluxo no Visual Studio. Não reaplique migrations em bancos já preparados.
 
 ## O que está disponível
 
@@ -25,7 +27,7 @@ reaplicar migrations nesse banco. O procedimento genérico abaixo serve para ins
   Nenhuma integração externa desses tipos foi adicionada.
 - O CSV mantém exatamente suas oito colunas anteriores.
 
-## Configuração pendente
+## Configuração
 
 ```json
 "BookCovers": {
@@ -44,15 +46,15 @@ fora do Git. Ele será enviado à Open Library nos cabeçalhos `User-Agent` e `F
 O serviço solicita registro do aplicativo: esse registro NÃO foi realizado; avalie
 as diretrizes e autorize separadamente qualquer envio do formulário externo.
 
-## Validar SEM tocar em MyCatalogCompletoDb
+## Preparar um novo banco de demonstração
 
-Pare a execução anterior no Visual Studio antes de compilar. Os comandos abaixo são
-para um **banco novo de validação**, nunca para `MyCatalogCompletoDb`.
+Pare qualquer execução anterior. Os comandos abaixo são um procedimento opcional para
+um **banco novo de demonstração**, não para atualizar bancos com dados existentes.
 
 1. Na raiz do projeto, em um terminal PowerShell, escolha um nome isolado:
 
 ```powershell
-$coverValidationName = 'MyCatalogCoverValidation_' + [guid]::NewGuid().ToString('N')
+$coverValidationName = 'MyCatalogDemo_' + [guid]::NewGuid().ToString('N')
 $coverValidationConnection = "Server=(localdb)\MSSQLLocalDB;Database=$coverValidationName;Trusted_Connection=True;TrustServerCertificate=True"
 $env:MYCATALOG_MIGRATION_CONNECTION = $coverValidationConnection
 ```
@@ -63,9 +65,10 @@ $env:MYCATALOG_MIGRATION_CONNECTION = $coverValidationConnection
 dotnet ef database update --project MyCatalog.csproj
 ```
 
-A factory de design exige a variável explícita e rejeita `MyCatalogCompletoDb`.
-Ela não inicia `Program.cs`, não lê a conexão padrão e não executa o seed. A nova migration
-cria apenas `CatalogItemCovers`; não atualiza nem exclui linhas de `CatalogItems`.
+A factory de design exige a variável explícita e rejeita o nome do banco principal
+configurado no projeto. Ela não inicia `Program.cs`, não lê a conexão padrão e não executa
+o seed. Em um banco vazio, o comando aplica ambas as migrations: `InitialCreate` cria os
+itens e `AddCatalogItemCover` acrescenta a tabela de associações, sem modificar itens existentes.
 Não execute rollback (`database update 0`) nem `database drop`.
 
 3. Na MESMA janela do terminal, aponte a aplicação para esse banco e habilite a função:
@@ -96,9 +99,28 @@ No Visual Studio, use o terminal integrado para esse procedimento. Se preferir o
 configure um perfil LOCAL equivalente, com a conexão isolada e as variáveis acima;
 não habilite a função no perfil padrão que ainda aponta para o banco principal.
 
-Nesta implementação a factory bloqueia migrations no banco principal intencionalmente.
-Uma futura aplicação nele exige aprovação específica, backup e revisão desse bloqueio.
-A aplicação não executa migrations automaticamente.
+O bloqueio da factory permanece intencionalmente, mesmo após a validação local no principal.
+Atualizar qualquer banco existente exige um procedimento separado, com aprovação e revisão
+do SQL; este guia não autoriza essa atualização. A aplicação não executa migrations automaticamente.
+
+### Variáveis temporárias e seed
+
+`CatalogSeed__Enabled` é falso por padrão e só é respeitado em Development. Use `true`
+somente na primeira população de um banco de demonstração. Ao encerrar a aplicação,
+remova a variável ou defina-a como `false`; nos bancos já preparados, mantenha o seed desativado.
+
+Para pesquisar sem preencher dados novamente, na janela com a conexão de demonstração:
+
+```powershell
+$env:CatalogSeed__Enabled = 'false'
+$env:BookCovers__Enabled = 'true'
+$env:BookCovers__ContactEmail = Read-Host 'Contato válido para identificação na Open Library'
+```
+
+Não use os escopos User/Machine para esses exemplos. Ao terminar a sessão, feche a
+aplicação e o terminal, ou remova as variáveis de conexão, migration, capas e seed.
+No Visual Studio, as variáveis devem ser herdadas antes de abrir a IDE; o terminal
+integrado não altera o ambiente de uma IDE que já estava aberta.
 
 ## Persistência e segurança
 
@@ -131,15 +153,15 @@ autenticação; controle de acesso deve ser preparado antes de uma publicação 
   fallback para imagens ausentes. Miniaturas usam M; a seleção salva é exibida em L.
 - O navegador envia requisições de imagem à Open Library; `no-referrer` evita enviar a URL
   local como referenciador. A associação persiste, mas a imagem depende do serviço externo.
-- Créditos e link da edição são preservados. Nenhuma capa remota é baixada ou versionada.
+- Créditos e link da edição são preservados. A aplicação exibe as capas remotamente, sem manter cópias locais como arquivos de conteúdo. As capturas de tela da documentação mostram a interface real e preservam os créditos exibidos.
   As diretrizes de exibição não são uma licença irrestrita para redistribuição de cada arte.
 
-Fontes consultadas:
+Referências da integração; consulte suas condições antes de novos usos ou distribuição:
 
-- https://openlibrary.org/developers/api
-- https://openlibrary.org/dev/docs/api/search
-- https://openlibrary.org/dev/docs/api/covers
-- https://openlibrary.org/developers/licensing
+- [APIs](https://openlibrary.org/developers/api)
+- [Pesquisa](https://openlibrary.org/dev/docs/api/search)
+- [Capas](https://openlibrary.org/dev/docs/api/covers)
+- [Licenciamento](https://openlibrary.org/developers/licensing)
 
 ## Testes e verificação da migration
 
@@ -148,12 +170,13 @@ dotnet build
 dotnet test
 ```
 
-Os 23 testes anteriores foram preservados. Os novos testes usam HTTP simulado, Data Protection
+Na última validação registrada, 118 testes passaram sem falhas ou ignorados, com build
+sem avisos ou erros. A suíte usa HTTP simulado, Data Protection
 efêmero e SQLite em memória: não dependem da internet nem da conexão LocalDB principal.
 Cobrem identificação ausente, respostas e erros da API, cache, limites, cancelamento,
 validação dos identificadores, seleção, concorrência, preservação de dados e CSV.
 
-A migration SQL Server também foi aplicada e validada em um banco LocalDB novo e isolado
-criado somente para a verificação. Foram criados 25 exemplos nesse banco, comparados todos
-os campos antes e depois da migration e verificada a associação em um novo contexto.
-O banco de validação foi mantido para revisão; o principal não foi aberto.
+A migration foi ensaiada em uma cópia isolada e posteriormente aplicada ao principal
+durante a validação local. Foram conferidos histórico, estrutura, chaves, índices e
+integridade, além da comparação integral dos 25 itens antes e depois. A suíte automatizada
+não substitui essa verificação específica do SQL Server nem cobre toda a interface MVC.
