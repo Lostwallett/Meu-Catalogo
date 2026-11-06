@@ -72,13 +72,17 @@ Não execute rollback (`database update 0`) nem `database drop`.
 
 ```powershell
 $env:ConnectionStrings__DefaultConnection = $coverValidationConnection
+$env:CatalogSeed__Enabled = 'true' # Somente para popular este novo banco de demonstração.
 $env:BookCovers__Enabled = 'true'
 # Defina BookCovers__ContactEmail com um contato real autorizado, fora de arquivos versionados.
 dotnet run --project MyCatalog.csproj --launch-profile https
 ```
 
-O perfil `https` usa Development: o seed prepara os 25 exemplos SOMENTE no banco isolado
-configurado nessa janela. Confira a conexão antes de executar. Sem contato, é possível
+O perfil `https` usa Development. O seed fica desativado por padrão e só prepara os 25 exemplos
+quando `CatalogSeed__Enabled=true`; confira a conexão isolada antes de habilitá-lo. Após
+popular o novo banco, encerre a aplicação e remova essa variável antes das próximas execuções
+(`Remove-Item Env:\CatalogSeed__Enabled`). Não a habilite para o banco principal nem para
+os bancos de teste existentes. Sem contato, é possível
 validar o restante da aplicação e a mensagem de pendência; a pesquisa não será enviada.
 
 4. Para testar com contato válido: abra um livro, pesquise, escolha uma edição e confirme.

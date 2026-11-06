@@ -1,4 +1,4 @@
-# MyCatalog
+# Meu Catálogo
 
 Aplicação web para organizar um catálogo pessoal de filmes, séries, livros, jogos e outros conteúdos. Permite cadastrar obras, consultar informações, combinar filtros, marcar favoritos e exportar resultados para CSV.
 
@@ -27,15 +27,56 @@ O projeto foi desenvolvido para praticar desenvolvimento backend com C# e ASP.NE
 - Dados demonstrativos para facilitar a exploração da aplicação em desenvolvimento.
 - Exportação CSV dos resultados da pesquisa e dos filtros aplicados.
 - Testes automatizados do gerador CSV, seed e integração de capas com HTTP simulado.
-- Nesta branch: pesquisa de capas de livros por obra e edição, seleção manual e associação persistente. Desabilitada por padrão até configurar um banco isolado e um contato válido; veja [o procedimento seguro](docs/CAPAS-OPEN-LIBRARY.md).
+- Pesquisa de capas de livros pela Open Library, com título e autor, consulta de edições, idiomas por extenso e agrupamento por metadados. A seleção é manual e a associação permanece após reiniciar a aplicação.
+
+### Capas de livros e configuração BookCovers
+
+A integração usa `HttpClient`, cache, controle de requisições e tratamento de indisponibilidade. As imagens são exibidas remotamente, com créditos e links da Open Library; itens sem capa mantêm a apresentação substituta. As ilustrações locais dos outros tipos são demonstrativas e não oficiais. Os metadados das capas não entram no CSV.
+
+`BookCovers:Enabled` é `false` por padrão, e `BookCovers:ContactEmail` fica vazio no repositório. Para habilitar a pesquisa, o banco selecionado precisa conter a migration `AddCatalogItemCover`, e é necessário informar um contato válido fora dos arquivos versionados. Exemplo para uma sessão local, após conferir o banco e seu esquema:
+
+```powershell
+$env:CatalogSeed__Enabled = 'false'
+$env:BookCovers__Enabled = 'true'
+$env:BookCovers__ContactEmail = Read-Host 'Contato válido para identificação na Open Library'
+try {
+    dotnet run --project MyCatalog.csproj --launch-profile https
+}
+finally {
+    Remove-Item Env:\BookCovers__ContactEmail -ErrorAction SilentlyContinue
+    Remove-Item Env:\BookCovers__Enabled -ErrorAction SilentlyContinue
+    Remove-Item Env:\CatalogSeed__Enabled -ErrorAction SilentlyContinue
+}
+```
+
+O contato é enviado à Open Library para identificação das requisições. Não o salve no repositório. No Visual Studio, as variáveis precisam estar no ambiente herdado pelo processo antes de abrir a IDE. Sem habilitação e contato válido, a aplicação mantém o fallback e não envia pesquisas. Veja os detalhes e a preparação isolada em [Capas pela Open Library](docs/CAPAS-OPEN-LIBRARY.md).
 
 ### Dados demonstrativos
 
-Em `Development`, a inicialização verifica 25 exemplos: 7 filmes, 7 livros, 7 séries, 3 jogos e 1 peça teatral na categoria Outro. Somente os exemplos ausentes são inseridos, mesmo que já existam outros registros no catálogo.
+O seed fica **desativado por padrão**, inclusive em `Development`. Ele só executa quando o ambiente é `Development` **e** `CatalogSeed:Enabled=true`. Sem essas duas condições, a inicialização não resolve o contexto nem abre uma conexão para o seed.
+
+Quando habilitado, verifica 25 exemplos: 7 filmes, 7 livros, 7 séries, 3 jogos e 1 peça teatral na categoria Outro. Somente os exemplos ausentes são inseridos, mesmo que já existam outros registros no catálogo.
 
 A identificação usa título e tipo, ignorando maiúsculas e diferenças de espaçamento. Registros existentes não são atualizados: IDs, favoritos e informações preenchidas são preservados. Repetir a inicialização não duplica exemplos com a mesma identificação. Se o título ou tipo de um exemplo for alterado, a próxima execução poderá considerar o exemplo original ausente e inseri-lo novamente.
 
 O seed exige o esquema do banco já criado. Ele não cria o banco nem aplica migrations automaticamente e não é chamado fora de `Development`.
+
+Para popular **apenas um banco de demonstração**, prepare previamente seu esquema, confira a conexão e use variáveis temporárias na mesma janela do PowerShell:
+
+```powershell
+# Informe a conexão de um banco exclusivo de demonstração, nunca a do principal.
+$env:ConnectionStrings__DefaultConnection = Read-Host 'Conexão do banco de demonstração'
+$env:CatalogSeed__Enabled = 'true'
+try {
+    dotnet run --project MyCatalog.csproj --launch-profile https
+}
+finally {
+    Remove-Item Env:\CatalogSeed__Enabled -ErrorAction SilentlyContinue
+    Remove-Item Env:\ConnectionStrings__DefaultConnection -ErrorAction SilentlyContinue
+}
+```
+
+Não habilite essa variável nos escopos User/Machine nem no perfil normal do Visual Studio. A chave é um controle de ativação, não uma proteção contra escolher o banco errado. Os perfis isolados de capas continuam usando suas conexões próprias e não precisam executar o seed novamente para usar os registros existentes.
 
 ### Exportação CSV
 
@@ -61,10 +102,10 @@ O `ApplicationDbContext` faz o acesso ao banco pelo EF Core e é recebido pelos 
 MyCatalog.slnx
 MyCatalog.csproj
 Controllers/                 Requisições MVC e ações do catálogo
-Models/                      Entidade e ViewModel
+Models/                      Entidades e ViewModels
 Views/                       Páginas Razor e layout compartilhado
 Data/                        DbContext e dados demonstrativos
-Services/                    Gerador CSV
+Services/                    Gerador CSV e integração de capas
 Migrations/                  Histórico de esquema do EF Core
 wwwroot/                     CSS e JavaScript
 Properties/launchSettings.json  Perfil local de execução
@@ -73,7 +114,7 @@ tests/MyCatalog.Tests/       Projeto xUnit e documentação dos testes
 
 ## Executar localmente
 
-Nesta máquina, o teste manual de capas já possui banco e perfis isolados. Consulte o [passo a passo para o Visual Studio](docs/TESTE-MANUAL-CAPAS.md). A API continua desativada até configurar um contato válido e autorizar seu uso.
+Os perfis opcionais de testes de capas possuem conexões isoladas; confira seus nomes de banco antes de utilizá-los. Consulte o [passo a passo para o Visual Studio](docs/TESTE-MANUAL-CAPAS.md). A API e o seed ficam desativados por padrão.
 
 ### Pré-requisitos
 
@@ -106,10 +147,11 @@ A configuração `ConnectionStrings:DefaultConnection` está em `appsettings.jso
 
 A conexão utiliza autenticação integrada do Windows, sem senha no arquivo. Confirme a instância e o nome do banco antes de aplicar o esquema. Quem já possui esse banco com a migration aplicada não precisa recriá-lo.
 
-### 3. Preparar um banco isolado nesta branch
+### 3. Conferir o esquema ou preparar um banco de demonstração
 
-A branch `experimento/capas-catalogo` inclui a migration inicial e a migration aditiva
-`AddCatalogItemCover`. **Não gere outra migration e não aplique mudanças em `MyCatalogCompletoDb`.**
+O código na `main` inclui a migration inicial e a migration aditiva
+`AddCatalogItemCover`. Se o banco já tem ambas aplicadas, não as execute novamente.
+Para uma instalação nova, prefira preparar um banco exclusivo de demonstração.
 
 A factory de design exige uma conexão isolada explícita e bloqueia o nome do banco
 principal. Siga o procedimento completo em [Capas pela Open Library](docs/CAPAS-OPEN-LIBRARY.md),
@@ -133,7 +175,7 @@ O perfil define `ASPNETCORE_ENVIRONMENT=Development` e as URLs locais `https://l
 dotnet dev-certs https --trust
 ```
 
-Na primeira execução em desenvolvimento, os exemplos ausentes serão cadastrados. A interface permite explorar tabela, cartões, filtros e exportação sem cadastro prévio de itens.
+O perfil `https` não habilita o seed. Antes de abrir o Visual Studio, confira que não há uma variável `CatalogSeed__Enabled=true` herdada; variáveis de ambiente podem sobrescrever o `false` de `appsettings.json`. Para uma validação segura do banco principal, mantenha `CatalogSeed__Enabled=false` no ambiente do processo, selecione **https** e confirme no log: `Dados demonstrativos desativados`. Não é necessário cadastrar ou editar itens para verificar a listagem. A abertura da aplicação não aplica migrations automaticamente.
 
 ## Testes automatizados
 
@@ -148,12 +190,13 @@ No Visual Studio, abra **Teste > Gerenciador de Testes** e escolha **Executar To
 
 Os testes CSV executam o serviço diretamente. Cada teste de persistência utiliza um banco SQLite privado em memória, descartado quando a conexão é fechada. Os testes não iniciam `Program.cs`, não leem a conexão da aplicação e não acessam o LocalDB principal.
 
-A suíte atual contém **111 casos** (incluindo os 23 originais), cobrindo:
+A suíte atual contém **118 casos** (incluindo os 23 originais), cobrindo:
 
 - Cabeçalho em português, separador, BOM, acentos, campos opcionais e favoritos.
 - Escape de aspas e quebras de linha, preservação da ordem recebida e proteção contra fórmulas.
 - Inserção dos 25 exemplos, execução repetida sem duplicações e comparação por título e tipo.
 - Preservação de registros existentes e de edições posteriores em seus demais campos.
+- Proteção do seed: desativado por padrão, ativação explícita somente em Development e bloqueio em Production/Staging.
 - Respostas e erros da Open Library por HTTP simulado, identificação, cache, limites e cancelamento.
 - Tokens de seleção, associação persistente, concorrência e preservação do CSV.
 

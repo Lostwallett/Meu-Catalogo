@@ -111,6 +111,14 @@ Ao terminar, feche essa instância do Visual Studio e o PowerShell para descarta
 variáveis temporárias. A próxima abertura normal pelo menu do Windows não herdará
 as variáveis dessa janela. Para retornar ao teste sem API, use **teste-capas-isolado**.
 
+## Proteção do seed
+
+Os perfis isolados mantêm suas conexões e configurações de capas. O seed agora fica
+desativado por padrão, inclusive em Development; não é necessário habilitá-lo para
+usar os 25 itens já existentes ou a capa salva. Ele só executa com Development e
+`CatalogSeed__Enabled=true`. Use essa ativação apenas ao preparar um novo banco de
+demonstração, conforme o README; não a defina globalmente nem para o banco principal.
+
 ## O que foi verificado
 
 - O banco de teste não existia antes da preparação.

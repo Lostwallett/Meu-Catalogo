@@ -33,14 +33,16 @@ if (!string.IsNullOrWhiteSpace(expectedTestDatabase))
         target.Server, target.Database, builder.Configuration.GetValue<bool>("BookCovers:Enabled"));
 }
 
-if (app.Environment.IsDevelopment())
+var seedResult = await CatalogSeedStartup.InitializeAsync(app.Services, app.Environment, app.Configuration);
+if (seedResult is { } result)
 {
-    await using var scope = app.Services.CreateAsyncScope();
-    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    var result = await CatalogSeedData.InitializeAsync(context);
     app.Logger.LogInformation(
         "Dados demonstrativos: {Added} adicionados e {Existing} já existentes. Registros existentes preservados.",
         result.Added, result.Existing);
+}
+else
+{
+    app.Logger.LogInformation("Dados demonstrativos desativados. Exigem Development e CatalogSeed:Enabled=true.");
 }
 
 if (!app.Environment.IsDevelopment())

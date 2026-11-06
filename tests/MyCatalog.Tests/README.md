@@ -21,7 +21,13 @@ mas não substitui testes específicos de concorrência ou configuração do SQL
 O seed identifica exemplos por título e tipo; renomear esses campos pode fazer com
 que um exemplo original seja considerado ausente numa execução posterior.
 
-A suíte tem 111 casos: os 23 originais, 37 de integração de capas, 6 de proteção do ambiente manual isolado, 30 de relevância e idiomas e 15 de identidade bibliográfica e agrupamento por metadados. As respostas HTTP são
+A proteção de inicialização também é testada: configuração ausente ou falsa não resolve
+serviços de banco; Production/Staging não executam o seed mesmo com a chave habilitada;
+Development com ativação explícita executa os exemplos somente em SQLite em memória,
+sem duplicações. Um teste usa uma variável de ambiente com prefixo exclusivo e limpeza
+ao final para verificar o mapeamento de `CatalogSeed__Enabled`.
+
+Além dos 111 casos anteriores (23 originais, 37 de integração de capas, 6 de proteção do ambiente manual isolado, 30 de relevância e idiomas e 15 de identidade bibliográfica e agrupamento por metadados), há 7 casos de proteção do seed. As respostas HTTP são
 simuladas com HttpMessageHandler e nunca usam a internet. O contato example.invalid
 existe somente nos testes offline e não deve ser usado na configuração da aplicação.
 Os testes verificam também que o modo desabilitado funciona sem a tabela de capas.
