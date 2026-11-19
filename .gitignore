@@ -266,6 +266,18 @@ ServiceFabricBackup/
 *.ldf
 *.ndf
 
+# Local environment and configuration overrides
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+appsettings.*.local.json
+Properties/launchSettings.local.json
+
+# SQL Server backups
+*.bak
+*.trn
+
 # Business Intelligence projects
 *.rdl.data
 *.bim.layout
